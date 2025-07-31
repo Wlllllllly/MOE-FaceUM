@@ -39,7 +39,7 @@ python setup.py install
 ```
 
 ## Download Models
-The pretrained models can be downloaded manually from (https://github.com/FacePerceiver/FaRL/tree/main);
+The pretrained models can be downloaded manually from [FaRL](https://github.com/FacePerceiver/FaRL/tree/main)
 
 The model can be downloaded manually from [Google Drive](https://drive.google.com/file/d/11QoOV13HRp8hDUSF2wjZM5AiWJ8OKBWP/view?usp=drive_link)
 
