@@ -8,8 +8,6 @@ from typing import Optional, List, Tuple
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-# import deepspeed
 from collections import OrderedDict
 import logging
 import torch
@@ -19,45 +17,10 @@ import torch.utils.checkpoint as checkpoint
 import numpy as np
 from timm.models.layers import trunc_normal_, DropPath
 import sys
-# from lora import Linear as LoRALinear
+
 from parallel_experts.moe import MoE
-from parallel_experts.moe import TaskMoE_Face_sixR as TaskMoE#TaskMoE_Face_twoR as TaskMoE,TaskMoE
-# from fmoe import FMoETransformerMLP#,SFMoETransformerMLP
-sys.path.append("/home/wly/HD/code/MOEFaceUM/model")
+from parallel_experts.moe import TaskMoE_Face_sixR as TaskMoE
 from retina_face import Retina_detect
-
-# from fmoe import FMoETransformerMLP
-
-# class CustomizedMoEPositionwiseFF(FMoETransformerMLP):
-#     def __init__(self, d_model, d_inner, dropout, pre_lnorm=True, moe_num_expert=64, moe_top_k=2):
-#         activation = nn.Sequential(
-#             nn.ReLU(),
-#             nn.Dropout(dropout)
-#         )
-#         super().__init__(num_expert=moe_num_expert, d_model=d_model, d_hidden=d_inner, top_k=moe_top_k,
-#                 activation=activation)
-
-#         self.pre_lnorm = pre_lnorm
-#         self.layer_norm = nn.LayerNorm(d_model)
-#         self.dropout = nn.Dropout(dropout)
-
-#     def forward(self, inp):
-#         if self.pre_lnorm:
-#             ##### layer normalization + positionwise feed-forward
-#             core_out = super().forward(self.layer_norm(inp))
-#             core_out = self.dropout(core_out)
-
-#             ##### residual connection
-#             output = core_out + inp
-#         else:
-#             ##### positionwise feed-forward
-#             core_out = super().forward(inp)
-#             core_out = self.dropout(core_out)
-
-#             ##### residual connection + layer normalization
-#             output = self.layer_norm(inp + core_out)
-
-#         return output
 
 
 class Bottleneck(nn.Module):
@@ -288,10 +251,7 @@ class ResidualAttentionBlock(nn.Module):
             
             if isinstance(self.mlp,nn.Sequential):
                 x = x + self.drop_path(self.mlp(self.ln_2(x)))
-            # elif isinstance(self.mlp, CustomizedMoEPositionwiseFF):
-            #     norm_x=self.ln_2(x)
-            #     mlp_x=self.mlp(norm_x, patch_indices_all, split_point_all)
-            #     x = x + self.drop_path(mlp_x)
+
             else:
                 x = x + self.drop_path(self.mlp(self.ln_2(x),task_j,patch_indices_all=patch_indices_all, split_point_all=split_point_all))
             return x
@@ -363,9 +323,9 @@ class Transformer(nn.Module):
             all_x = []
             for i, blk in enumerate(self.resblocks):
                 if self.training and self.use_checkpoint:
-                    x = checkpoint.checkpoint(blk, x)#, patch_indices_all=patch_indices_all,split_point_all=split_point_all)
+                    x = checkpoint.checkpoint(blk, x)
                 else:
-                    x = blk(x)#, patch_indices_all=patch_indices_all,split_point_all=split_point_all)
+                    x = blk(x)
                 if return_all:
                     all_x.append(x)
             if return_all:
@@ -608,24 +568,6 @@ class FaRLVisualFeatures_TaskMOE(nn.Module):
 
         self.visual.transformer.resblocks[-1].mlp  = TaskMoE(dim, mlp_hidden_dim // ffd_heads, num_ffd_experts,top_k,w_MI=0.005, limit_k=1, w_topk_loss=0.0, task_num=6)
         self.visual.transformer.resblocks[-2].mlp  = TaskMoE(dim, mlp_hidden_dim // ffd_heads, num_ffd_experts,top_k,w_MI=0.005, limit_k=1, w_topk_loss=0.0, task_num=6)
-        # self.visual.transformer.resblocks[-1].mlp.init_aux_statistics()
-        # self.visual.transformer.resblocks[-2].mlp.init_aux_statistics()
-
-        # for i,block in enumerate(self.visual.transformer.resblocks):
-        #     if i%2:
-        #         block.mlp = CustomizedMoEPositionwiseFF(768, 768*4, 0.1,
-        #                                 pre_lnorm=nn.LayerNorm(768),
-        #                                 moe_num_expert=4,
-        #                                 moe_top_k=2)
-        # self.visual.transformer.resblocks[-1].mlp=CustomizedMoEPositionwiseFF(768, 768*4, 0.1,
-        #                                 pre_lnorm=nn.LayerNorm(768),
-        #                                 moe_num_expert=8,
-        #                                 moe_top_k=2)
-        
-        # self.visual.transformer.resblocks[-2].mlp=CustomizedMoEPositionwiseFF(768, 768*4, 0.1,
-        #                                 pre_lnorm=nn.LayerNorm(768),
-        #                                 moe_num_expert=8,
-        #                                 moe_top_k=2)
 
 
         vision_patch_size = self.visual.conv1.weight.shape[-1]
@@ -682,9 +624,6 @@ class FaRLVisualFeatures_TaskMOE(nn.Module):
         features = []
         cls_tokens = []
         for blk in self.visual.transformer.resblocks:
-            # x = blk(x,task_j=task_j)
-            # raise Exception(f"x:{x.shape}") #[TOKEN,BATCH,Dimention]
-            # x = x + self.task_embedding[:, task_j:task_j+1, :]
             x = blk(x, task_j = task_j, patch_indices_all = patch_indices_all, split_point_all = split_point_all)
             feature = x[1:, :, :].permute(
                 1, 2, 0).view(N, -1, S, S).contiguous().float()
