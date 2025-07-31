@@ -1,4 +1,4 @@
-# MOE-FaceUM
+
 <div align="center">
 
 # MOE-FaceUM: A Unified Face Perception Model with Face-aware Mixture of Experts
