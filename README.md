@@ -12,39 +12,60 @@ Recent advances in face perception tasks such as face recognition, emotion recog
 
 ## Installation
 ```bash
-conda env create --file environment_facex.yml
-conda activate facexformer
+conda create --name MOE-FaceUM python=3.8
+conda activate MOE-FaceUM
 
 # Install requirements
-pip install torch==2.0.1+cu117 torchvision==0.15.2+cu117 torchaudio==2.0.2+cu117 --extra-index-url https://download.pytorch.org/whl/cu117
+
+pip install torch==2.0.1  torchvision==0.15.2 torchaudio==2.0.2
+
 pip install -r requirements.txt
+
+# Install MOE
+cd model/parallel_linear
+python setup.py install
+
+# Install mmsegmentation
+git clone https://github.com/open-mmlab/mmsegmentation.git
+cd mmsegmentation
+python setup.py install
+
+# Install mmsegmentation
+git clone https://github.com/open-mmlab/mmdetection.git
+cd mmdetection
+python setup.py install
+
+
 ```
+
 ## Download Models
-The models can be downloaded manually from [Google Drive](https://huggingface.co/kartiknarayan/facexformer)
+The pretrained models can be downloaded manually from (https://github.com/FacePerceiver/FaRL/tree/main);
+
+The model can be downloaded manually from [Google Drive](https://huggingface.co/kartiknarayan/facexformer)
+
 
 The directory structure should finally be:
 
 ```
-  . ── MOE-FaceUM ──┌── ckpts/model.pt
-                     ├── network
-                     └── inference.py                    
+  . ── MOE-FaceUM ──┌── ckpts
+                         ├── FaRL-Base-Patch16-LAIONFace20M-ep64.pth 
+                         └── checkpoint.pth.tar 
+                    ├── model
+                    └── inference.py      
+                    ├── results
+                    └── images
 ```
 ## Usage
 
-Download trained model from [oogle Drive](https://huggingface.co/kartiknarayan/facexformer) and ensure the directory structure is correct.<br>
-For demo purposes, we have released the code for inference on a single image.<br>
-It supports a variety of tasks which can be prompted by changing the "task" argument. 
 
 ```python
-python inference.py --model_path ckpts/model.pt \
-                    --image_path image.png \
+CUDA_VISIBLE_DEVICES=0 torchrun --nproc_per_node=1 --master_port=53000  inference.py --config_path test.yaml \
+                    --model_path ckpts/checkpoint.pth.tar \
+                    --image_path images/2025073.jpg \
                     --results_path results \
-                    --task parsing \
-                    --gpu_num 0
+                    --gpu_num 0 \
 
-
+```
 ## TODOs
-- Release dataloaders for the datasets used.
 - Release training script.
 
-# MOE-FaceUM

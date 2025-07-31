@@ -1,0 +1,15 @@
+opencv-python
+facenet_pytorch
+torch==2.0.1 
+torchvision==0.15.2 
+torchaudio==2.0.2
+timm
+icecream
+easydict
+mmcv==2.0.0rc4
+scipy
+prettytable
+pycocotools
+shapely
+ftfy
+regex
