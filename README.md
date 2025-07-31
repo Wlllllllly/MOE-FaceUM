@@ -30,7 +30,7 @@ git clone https://github.com/open-mmlab/mmsegmentation.git
 cd mmsegmentation
 python setup.py install
 
-# Install mmsegmentation
+# Install mmdetection
 git clone https://github.com/open-mmlab/mmdetection.git
 cd mmdetection
 python setup.py install
