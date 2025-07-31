@@ -78,4 +78,4 @@ CUDA_VISIBLE_DEVICES=0 torchrun --nproc_per_node=1 --master_port=53000  inferenc
 - Release training script.
 
 ## Acknowledgement
-We would like to thank the authors of [RepoName](https://github.com/lxq1000/Faceptor) and (https://github.com/FacePerceiver/FaRL) for their open-source contribution, which inspired parts of this project.
+We would like to thank the authors of [Faceptor](https://github.com/lxq1000/Faceptor) and [FaRL](https://github.com/FacePerceiver/FaRL) for their open-source contribution, which inspired parts of this project.
