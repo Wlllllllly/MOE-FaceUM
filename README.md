@@ -66,6 +66,13 @@ CUDA_VISIBLE_DEVICES=0 torchrun --nproc_per_node=1 --master_port=53000  inferenc
                     --gpu_num 0 \
 
 ```
+
+## Visualization
+
+<p align="center" width="100%">
+  <img src='fig/sub_results_visual_v1.png'>
+</p>
+
 ## TODOs
 - Release training code.
 - Release training script.
