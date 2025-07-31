@@ -173,19 +173,16 @@ def test(args):
                                                           device_ids=[local_rank], bucket_cap_mb=16,
                                                           find_unused_parameters=True)
     model.register_comm_hook(None, fp16_compress_hook)
-    # raise Exception(model.state_dict().keys())
     weights_path = args.model_path
     state_dict = torch.load(weights_path)
     msg = model.load_state_dict(state_dict['state_dict'], strict=False)
     state_keys = set(state_dict['state_dict'].keys())
-    # raise Exception(state_keys)
     model_keys = set(model.state_dict().keys())
     missing_keys = model_keys - state_keys
     for k in missing_keys:
         print(f'missing key: {k}')
-
     print(f'load msg: {msg}')
-    # raise Exception("stop")
+
     device = "cuda:" + str(args.gpu_num)
     model.eval()
 
@@ -230,7 +227,7 @@ def test(args):
             # print(face_age["age_morph2"]["head_output"].shape)
             bias_correction = 30.0
             logits = face_age["age_morph2"]["head_output"]  # shape: (B, 101)
-            age_probs = F.softmax(logits, dim=1)            # 使用 softmax 而不是 sigmoid
+            age_probs = F.softmax(logits, dim=1)       
             rank = torch.arange(101, dtype=torch.float32).cuda()
             age_preds = torch.sum(age_probs * rank, dim=1) + bias_correction  # shape: (B,)
 
@@ -299,56 +296,6 @@ def test(args):
                     file.write(f"{x.item()} {y.item()}\n")
             file.close()
 
-    
-
-
-    # if tasks[0] == 0:
-    #     preds = seg_output.softmax(dim=1)
-    #     mask = torch.argmax(preds, dim=1)
-    #     pred_mask = mask[0].detach().cpu().numpy()
-    #     save_path = os.path.join(args.results_path, "parsing.png")
-    #     cv2.imwrite(f"{save_path}", pred_mask)
-    #     mask, face, color_mask = visualize_mask(unnormalize(images[0].detach().cpu()), pred_mask)
-    #     save_path = os.path.join(args.results_path, "parsing_visualization.png")
-    #     cv2.imwrite(f"{save_path}", mask[:, :, ::-1])
-    # if tasks[0] == 1:
-
-
-    # if tasks[0] == 3:
-    #     probs = torch.sigmoid(attribute_output[0])
-    #     preds = (probs >= 0.5).float()
-    #     pred = preds.tolist()
-    #     pred_str = [str(int(b)) for b in pred]
-    #     joined_pred = " ".join(pred_str)
-    #     save_path = os.path.join(args.results_path, "attribute.txt")
-    #     with open(f'{save_path}', 'w') as file:
-    #         file.write(joined_pred)
-    #     file.close()
-    # if tasks[0] == 4:
-    #     age_preds = torch.argmax(age_output, dim=1)[0]
-    #     gender_preds = torch.argmax(gender_output, dim=1)[0]
-    #     race_preds = torch.argmax(race_output, dim=1)[0]
-    #     save_path = os.path.join(args.results_path, "age_gender_race.txt")
-    #     with open(f'{save_path}', 'w') as file:
-    #         file.write(f"Age: {age_preds.item()} \n")
-    #         file.write(f"Gender: {gender_preds.item()} \n")
-    #         file.write(f"Race: {race_preds.item()}")
-    #     file.close()
-    # if tasks[0] == 5:
-    #     probs = torch.sigmoid(visibility_output[0])
-    #     preds = (probs >= 0.5).float()
-    #     pred = preds.tolist()
-    #     pred_str = [str(int(b)) for b in pred]
-    #     joined_pred =  " ".join(pred_str)
-    #     save_path = os.path.join(args.results_path, "visibility.txt")
-    #     with open(f'{save_path}', 'w') as file:
-    #         file.write(joined_pred)
-    #     file.close()
-    # image = unnormalize(images[0].detach().cpu())
-    # image = image.permute(1, 2, 0).numpy()
-    # image = (image * 255).astype(np.uint8)
-    # save_path = os.path.join(args.results_path, "face.png")
-    # cv2.imwrite(f"{save_path}", image[:, :, ::-1])
 
 
             
