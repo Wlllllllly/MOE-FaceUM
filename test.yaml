@@ -1,0 +1,74 @@
+
+common:
+
+  solver:
+    type: Solver
+
+  seed: 2048
+  cuda_deterministic: False
+  fp16: True
+
+  num_workers: 4
+
+  
+  backbone:
+    type: FaRLVisualFeatures_TaskMOE
+    kwargs:
+      model_type: base
+      model_path: ckpts/FaRL-Base-Patch16-LAIONFace20M-ep64.pth
+      drop_path_rate: 0.2
+      forced_input_resolution: 512
+
+  heads:
+      type: TaskSpecificHeadsHolder
+      kwargs: 
+        subnets_cfg:
+          recog:
+            type: RecognitionHead
+            kwargs:
+              task_name: recog_ms1mv3
+          age:
+            type: SwinFaceHead
+            kwargs:
+              outputs: [101]
+              indices: [11, 11, 11, 11]
+              task_names: ["age_morph2"]
+          biattr:
+            type: SwinFaceHead
+            kwargs:
+              outputs: [40]
+              indices: [11, 11, 11, 11]
+              task_names: ["biattr_celeba"]    
+          affect:
+            type: SwinFaceHead
+            kwargs:
+              outputs: [7]
+              indices: [11, 11, 11, 11]
+              task_names: ["affect_affectnet"]   
+          parsing:
+            type: MMSEG_UPerHead
+            kwargs:
+              outputs: [19]
+              out_types: ["ParsingOutput"]
+              task_names: ["parsing_celebam"]
+              indices: [11, 11, 11, 11]
+              out_size: [512, 512]
+          align:
+            type: MMSEG_UPerHead
+            kwargs:
+              outputs: [68]
+              out_types: ["AlignOutput"]
+              task_names: ["align_300w"]
+              indices: [11, 11, 11, 11]
+              out_size: [512, 512]
+
+  model_entry:
+    type: aio_entry
+    kwargs:
+      size_group:
+        group_0:
+          task_types: ["recog", "age", "biattr", "affect"]
+          input_size: 112
+        group_1:
+          task_types: ["parsing","align"]
+          input_size: 512
